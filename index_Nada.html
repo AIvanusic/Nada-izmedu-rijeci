@@ -1,0 +1,987 @@
+<!doctype html>
+<html lang="hr">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Nada: Interaktivni vodič</title>
+
+    <style>
+      /* sve što se primjenjuje u izgledu cijele aplikacije */
+      body {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: Arial, sans-serif;
+      }
+
+      /* početni ekran aplikacije */
+      .start-screen {
+        position: relative;
+        width: 100%;
+        height: 100vh;
+      }
+
+      .background {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
+      .overlay {
+        position: absolute;
+        top: 30%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(255, 255, 255, 0.85);
+        padding: 10px;
+        border-radius: 12px;
+        text-align: center;
+        width: 400px;
+      }
+
+      /*.overlay h1 {
+        margin-top: 0;
+      }*/
+
+      .overlay button {
+        margin-top: 15px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        background: #e91e63;
+        color: white;
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      /* ekran s likovima koji sudjeluju u razgovoru*/
+      .character-screen,
+      .partner-screen {
+        display: none;
+        text-align: center;
+        padding: 40px;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background: linear-gradient(135deg, #d7f3f2, #bcdcdc);
+      }
+
+      .characters img {
+        width: 120px;
+        margin: 10px;
+        cursor: pointer;
+        transition: 0.25s ease;
+        border-radius: 16px;
+        box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
+        border: 3px solid transparent;
+      }
+
+      .characters img:hover {
+        transform: scale(1.6);
+        border-color: #28817f;
+      }
+
+      /* gumbi */
+
+      .back-btn {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        /*background: white;
+        color: black;
+        border: 1px solid #ccc;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;*/
+        z-index: 10;
+      }
+
+      /* ekran za početak i provođenje kviza */
+
+      .kviz-screen {
+        display: none;
+        position: relative;
+        /*width: 100%;*/
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      .kviz-bg {
+        position: absolute;
+        /*top: 0;
+        left: 0;*/
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        /*z-index: 0;*/
+      }
+
+      /* fiksiranje zone klupe na slici da bi se moglo postaviti likove
+
+      .bench-area {
+        position: relative;
+        bottom: 12%; /* visina klupe u slici
+        left: 50%;
+        transform: translateX(-50%);
+        width: 70%;
+        height: 20%;
+        z-index: 2;
+      }*/
+
+      .character {
+        position: absolute;
+        height: 70vh;
+        width: auto;
+      }
+
+      .ana {
+        left: 20%;
+        bottom: -1vh;
+      }
+
+      .partner {
+        right: 20%;
+        bottom: -3vh;
+      }
+
+      /* tekstualni okviri */
+
+      .speech-box {
+        position: absolute;
+        top: 8%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        max-width: 700px;
+        background: #bcdcdc;
+        border: 1px solid #130101;
+        padding: 8px 12px;
+        border-radius: 12px;
+        text-align: center;
+
+        z-index: 3;
+      }
+
+      .speech-box button {
+        margin-top: 10px;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 8px;
+        background: #e91e63;
+        color: white;
+        cursor: pointer;
+      }
+
+      .speech-box.question {
+        top: 20%;
+        left: 10%;
+        transform: none;
+        width: 35%;
+        /*text-align: left;*/
+      }
+
+      /* OPCIJE */
+      .opcije {
+        position: absolute;
+        bottom: 11%;
+        left: 65%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-direction: column;
+        background: #bcdcdc;
+        border: 1px solid #130101;
+        padding: 8px 12px;
+        border-radius: 12px;
+        gap: 15px;
+        /*z-index: 4;*/
+      }
+
+      .opcije button {
+        padding: 14px 18px;
+        font-size: 16px;
+        border-radius: 12px;
+        border: none;
+        background: white;
+        cursor: pointer;
+        width: 320px;
+        text-align: left;
+        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.12);
+        transition:
+          transform 0.15s ease,
+          background 0.15s ease;
+      }
+
+      /* FEEDBACK */
+      .feedback {
+        position: absolute;
+        bottom: 25%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 60%;
+        background: white;
+        padding: 20px;
+        border-radius: 12px;
+        z-index: 5;
+        text-align: center;
+      }
+
+      .feedback.good {
+        background: #e8f5e9;
+        border: 2px solid #4caf50;
+      }
+
+      .feedback.bad {
+        background: #263238;
+        color: white;
+        border: 2px solid #e91e63;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      /* NARCISI */
+      .narcisi {
+        position: absolute;
+        left: 20px;
+        top: 120px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 4;
+      }
+
+      .narcis {
+        width: 40px;
+        height: 40px;
+        background: url("slike/narcis_siva.png") no-repeat center/contain;
+      }
+
+      .narcis.active {
+        background: url("slike/narcis_zuta.png") no-repeat center/contain;
+      }
+
+      .quote {
+        margin-bottom: 10px;
+      }
+
+      .quote-text {
+        font-weight: bold;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      .quote-author {
+        font-style: italic;
+        display: block;
+        color: #cfd8dc;
+        margin-bottom: 10px;
+      }
+
+      .result-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        display: none;
+      }
+
+      .result-screen.active {
+        display: flex;
+      }
+
+      .result-card {
+        background: #236364;
+        color: #fff5d5;
+        padding: 30px;
+        border-radius: 16px;
+        max-width: 600px;
+        width: 80%;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      }
+
+      .result-card p {
+        line-height: 1.6;
+      }
+      .result-card h2 {
+        color: #fff5d5; /* topla žuta */
+      }
+
+      .result-card button {
+        margin-top: 20px;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        background: #e91e63;
+        color: white;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- START SCREEN - početni ekran na kojem se pali aplikacija -->
+
+    <div class="start-screen" id="startScreen">
+      <img src="slike/Pozadina.png" class="background" />
+
+      <div class="overlay">
+        <h1>Dobrodošli</h1>
+
+        <p>
+          Postoji li osoba koja ne poznaje osobu oboljelu od raka dojke? Jeste
+          li znali kako s njom razgovarati? Kako biti podrška od prve vijesti,
+          bez da Vas vijest ostavi zabezeknute i na taj način priopćavanje učini
+          oboljeloj osobi neugodnijim nego je potrebno. Kako biste izbjegli
+          situaciju gdje je Vaš odgovor postao neugodnom središnjom točkom
+          razgovora i kako biste svojoj dragoj osobi od prve bili podrškom,
+          pripremili smo ovaj interaktivni vodič. Prođite njime i vjerujemo da
+          će Vam pomoći u razumijevanju kako razgovarati s osobom koja prolazi
+          kroz liječenje raka dojke. Krenimo.
+        </p>
+
+        <button onclick="start()">Odaberite likove</button>
+      </div>
+    </div>
+
+    <!-- Odabir lika Ane -->
+
+    <div class="character-screen" style="display: none" id="characterScreen">
+      <button class="back-btn" onclick="backToPocetak()">Povratak</button>
+      <h2>
+        Odaberite lik Ane, osobe koja Vam treba priopćiti ozbiljnu vijest.
+      </h2>
+
+      <div class="characters">
+        <img src="slike/S_Ana1.png" onclick="selectAna('ana1')" />
+        <img src="slike/S_Ana2.png" onclick="selectAna('ana2')" />
+        <img src="slike/S_Ana3.png" onclick="selectAna('ana3')" />
+      </div>
+    </div>
+
+    <!-- Odabir lika sugovornika - korisnika aplikacije -->
+
+    <div class="partner-screen" style="display: none" id="partnerScreen">
+      <button class="back-btn" onclick="backToPocetak()">Povratak</button>
+
+      <h2>Odaberite lik koji predstavlja Vašu ulogu.</h2>
+
+      <div class="characters">
+        <img src="slike/S_Sugovornik1.png" onclick="selectPartner('p1')" />
+        <img src="slike/S_Sugovornik2.png" onclick="selectPartner('p2')" />
+        <img src="slike/S_Sugovornik3.png" onclick="selectPartner('p3')" />
+      </div>
+    </div>
+
+    <!-- KVIZ SCREEN . ekran na kojem se odvija kviz -->
+
+    <div class="kviz-screen" style="display: none" id="kvizScreen">
+      <img src="slike/Pozadina.png" class="kviz-bg" />
+      <img id="anaCharacter" class="character ana" />
+      <img id="partnerCharacter" class="character partner" />
+
+      <button class="back-btn" onclick="backToPocetak()">Povratak</button>
+
+      <!-- Postavljanje likova na ekran - na klupicu - odustati od ovoga? Ne radi mi kako želim!-->
+
+      <!-- <div class="bench-area">
+        <img id="anaCharacter" class="character ana" />
+        <img id="partnerCharacter" class="character partner" />
+      </div>-->
+
+      <div class="speech-box" id="speechBox">
+        <p id="speechText">
+          Nalazite se u situaciji gdje Vam bliska osoba želi priopćiti ozbiljnu
+          vijest. Kroz ovaj vodič birat ćete odgovore i učiti kako pružiti
+          podršku.
+        </p>
+
+        <button id="speechBtn" onclick="startGame()">Započnite</button>
+      </div>
+
+      <!-- OPCIJE -->
+      <div id="opcije" class="opcije"></div>
+
+      <!-- FEEDBACK -->
+      <div id="feedbackBox" class="feedback hidden">
+        <p id="feedbackText"></p>
+        <button onclick="nextQuestion()">Nastavite</button>
+      </div>
+
+      <!-- NARCISI -->
+      <div id="narcisi" class="narcisi"></div>
+    </div>
+
+    <!-- KONAČNI EKRAN ZA REZULTAT KVIZA -->
+    <div id="resultScreen" class="result-screen">
+      <div class="result-card">
+        <div id="resultText"></div>
+        <button id="resultBtn">Igraj ponovno</button>
+      </div>
+    </div>
+
+    <!-- Sve akcije po aplikaciji -->
+
+    <script>
+      let selectedAna = null;
+      let selectedPartner = null;
+
+      let currentQuestion = 0;
+      let score = 0;
+
+      const anaImages = {
+        ana1: "slike/Ana1.png",
+        ana2: "slike/Ana2.png",
+        ana3: "slike/Ana3.png",
+      };
+
+      const partnerImages = {
+        p1: "slike/pokemon1.png",
+        p2: "slike/pokemon2.png",
+        p3: "slike/pokemon3.png",
+      };
+
+      /* kretanje kroz aplikaciju */
+
+      function start() {
+        /*document.querySelector(".start-screen").style.display = "none";
+           document.querySelector(".character-screen").style.display = "flex";*/
+        showOnly("characterScreen");
+      }
+
+      function selectAna(ana) {
+        selectedAna = ana;
+        /*document.querySelector(".character-screen").style.display = "none";
+           document.querySelector(".partner-screen").style.display = "flex";*/
+        showOnly("partnerScreen");
+      }
+
+      function selectPartner(partner) {
+        selectedPartner = partner;
+
+        showOnly("kvizScreen");
+
+        document.getElementById("anaCharacter").src = anaImages[selectedAna];
+
+        document.getElementById("partnerCharacter").src =
+          partnerImages[selectedPartner];
+
+        resetIntro();
+      }
+
+      function backToPocetak() {
+        resetGame();
+        /*document.querySelector(".partner-screen").style.display = "none";
+                 document.querySelector(".character-screen").style.display = "none";
+                 document.querySelector(".kviz-screen").style.display = "none";
+                 document.querySelector(".start-screen").style.display = "block";
+                 document.querySelector(".back-btn").style.display = "block";*/
+        showOnly("startScreen");
+      }
+
+      /*rješenje prikazivanja ekrana koji su željeni prema tijeku akcija*/
+
+      function showOnly(screenId) {
+        document.getElementById("startScreen").style.display = "none";
+        document.getElementById("characterScreen").style.display = "none";
+        document.getElementById("partnerScreen").style.display = "none";
+        document.getElementById("kvizScreen").style.display = "none";
+
+        if (screenId === "characterScreen" || screenId === "partnerScreen") {
+          document.getElementById(screenId).style.display = "flex";
+        } else {
+          document.getElementById(screenId).style.display = "block";
+        }
+      }
+
+      /* pokretane tijeka igre */
+
+      function startGame() {
+        currentQuestion = 0;
+        score = 0;
+
+        // postavljanje uvodnog teksta prije same igre/škole
+        document.getElementById("speechText").innerText =
+          "Ana će s Vama podijeliti svoje misli ili vijest.\n\n" +
+          "Odaberite kako biste reagirali.\n\n" +
+          "Dobre odgovore nagrađujemo narcisima.\n" +
+          "Na kraju ćete dobiti simboličnu nagradu ovisno o uspjehu.";
+
+        /* da ovaj ekran nema opcije i feedback - treba li?
+           document.getElementById("opcije").innerHTML = "";
+           document.getElementById("feedbackBox").classList.add("hidden");*/
+
+        // Gumb za početak igre
+        //document.getElementById("speechBtn").innerText = "Krenite";
+        //document.getElementById("speechBtn").onclick = realStartGame;
+        //document.getElementById("speechBtn").style.display = "inline-block";
+
+        const btn = document.getElementById("speechBtn");
+        btn.innerText = "Krenite";
+        btn.onclick = realStartGame;
+      }
+
+      function realStartGame() {
+        initNarcisi();
+
+        document.querySelector(".speech-box").classList.add("question");
+
+        const btn = document.getElementById("speechBtn");
+        btn.style.display = "none";
+
+        // u ovom okviru ne dolazi button uz pitanja/izjavu
+        //document.querySelector(".speech-box button").style.display = "none";
+        //document.querySelector(".speech-box").classList.add("question");
+        //document.querySelector(".back-btn").style.display = "none";
+
+        loadQuestion();
+      }
+
+      /* pitanja*/
+
+      const questions = [
+        {
+          text: "Moram ti priopćiti teške vijesti... Rak dojke.",
+          answers: [
+            {
+              text: "Bože moj! Jesi sigurna?! Pa kako je to moguće?! Ti živiš tako zdravo!",
+              correct: false,
+              feedback:
+                "Ova reakcija stvara paniku i stavlja teret na osobu koja je upravo podijelila tešku vijest te postavlja osobu u poziju da pruža utjehu i umirenje. Propitivanje dijagnoze i životnog stila može poljuljati sigurnost osobe u medicinsku skrb ili učiniti da osjeća krivnju.",
+            },
+            {
+              text: "Hvala što si mi rekla. Ovdje sam za tebe. Rado ću učiniti što god mogu da pomognem i tu sam u svako doba dana.",
+              correct: true,
+              feedback:
+                "Ovo je podržavajuće i daje prostor osobi da se osami koliko treba, ali i potraži podršku kada je treba.",
+            },
+            {
+              text: "Ma bit će sve dobro!",
+              correct: false,
+              feedback:
+                "Prebrzo uvjeravanje može zvučati neiskreno i obezvrjeđuje strah i neisgurnost koju osjeća osoba s kojom razgovarate.",
+            },
+          ],
+        },
+        {
+          text: "Sigurna sam, biopsija je potvrdila dijagnozu. Više detalja znat ću nakon razgovora s onkologom",
+          answers: [
+            {
+              text: "Ma sigurno će biti dobro!",
+              correct: false,
+              feedback:
+                "Ovo negira stvarne emocije i umanjuje objektivno velik zdravstveni problem.",
+            },
+            {
+              text: "Znam da je ovo strašno. Kako se osjećaš u ovom trenutku?",
+              correct: true,
+              feedback:
+                "Ovo validira emocije i pokazuje interes za osobu u trenutku, bez odgode.",
+            },
+            {
+              text: "Znam jednu ženu koja je prošla kroz sličnu situaciju i sad je zdrava kao dren.",
+              correct: false,
+              feedback:
+                "Rak dojke ozbiljna je i potencijalno opasna bolest, s ozbiljnim rizicima. Svaka je oboljela osoba drugačija, kao što je to i svaka bolest. Jamstva nisu dostupna za ovu situaciju.",
+            },
+          ],
+        },
+        {
+          text: "Bojim se. Ne znam što me čeka. Operacija, kemoterapije, zračenja... Ne znam kako ću se nositi s tim.",
+          answers: [
+            {
+              text: "Moraš biti pozitivna! Stav je pola liječenja! Što god misliš to privučeš!",
+              correct: false,
+              feedback:
+                "Ovo negira stvarno stanje. Vaša je draga osoba opravdano uplašena, izložena je nečemu s čime nema iskustva, a što ostavlja ozbiljne i cjeloživotne posljedice. Ako liječenje ne donese željeni rezultat, osobi se stavlja teret da je sama kriva jer nije bila dovoljno pozitivna.",
+            },
+            {
+              text: "Tvoj strah ima smisla. Smije ti biti teško. ",
+              correct: true,
+              feedback:
+                "Ovo validira emocije i ne nudi savjete i recepte koji nisu traženi. Pokazuje da se ima na koga osloniti kada za time ima potrebu ili želju.",
+            },
+            {
+              text: "Nemoj razmišljati o tome.",
+              correct: false,
+              feedback:
+                "Izbjegavanje ne pomaže. Sve je to stvarno, neće nestati. Osoba s kojom razgovarate ima pravo biti uplašena i zabrinuta, a ignoriranje tih emocija može činiti da se osjeća izolirano i neshvaćeno.",
+            },
+          ],
+        },
+        {
+          text: "Jedan od najvećih stahova mi je gubitak kose. Znam da je to 'samo kosa', ali...",
+          answers: [
+            {
+              text: "Pa kosa je najmanje važna stvar!",
+              correct: false,
+              feedback:
+                "Ovime se nesvjesno umanjuje legitiman gubitak. Mnogim je ženama kosa simbol ženstvenosti i normalnog života. Gubitak kose može biti traumatičan i utjecati na samopouzdanje i emocionalno stanje. Ovakav odgovor može učiniti da se osoba osjeća kao da se ne razumije njezinu bol i gubitak.",
+            },
+            {
+              text: "Razumijem. Nije 'samo kosa'. To je dio tebe. Smije ti biti teško zbog. toga.",
+              correct: true,
+              feedback:
+                "Ovo pokazuje empatiju i razumijevanje, što je važno za osoba koje proživljavaju teške trenutke.",
+            },
+            {
+              text: "Ionako ti bolje stoji kratka kosa. Bilo je i vrijeme za promjenu frizure.",
+              correct: false,
+              feedback:
+                "Kompliment o frizuri skreće pažnju s gubitka i može se doživjeti kao neosjetljiv i neprimjeren, jer umanjuje stvarne emocije i gubitak koji osoba doživljava.",
+            },
+          ],
+        },
+        {
+          text: "Ponekad pomislim: Zašto ja? Što sam napravila krivo?",
+          answers: [
+            {
+              text: "Ma ništa ti nisi napravila! Ali..., jesi li čula za onu studiju o šećeru / cjepivu / kontracepciji... i raku?",
+              correct: false,
+              feedback:
+                "Počelo je kao ispravan pokušaj, ali odmah se uvodi propitivanje uzroka, U tom kontekstu zvuči kao prikrivena sugestija da je osoba sama kriva za bolest.",
+            },
+            {
+              text: "Ništa krivo nisi napravila. Rak se ne zarađuje. Pitanje ti je posve razumljivo, ali odgovor je jedan jedini: nisi ti kriva.",
+              correct: true,
+              feedback:
+                "Ovo pokazuje razumijevanje i validira osjećaj krivnje, ali jasno daje do znanja da je osjećaj neopravdan, nema odgovornosti Vaše drage osobe za bolest.",
+            },
+            {
+              text: "I stres je veliki okidač za rak, a stresa ti nije nedostajalo.",
+              correct: false,
+              feedback:
+                "Osoba koja se bori s osjećajem krivnje ne treba medicinske teorije već razrješenje toga osjećaja.",
+            },
+          ],
+        },
+        {
+          text: "Suprug mi je velika podrška, ali osjećam da se i on boji i da ne zna što reći.",
+          answers: [
+            {
+              text: "Dobro je da imaš njega, pazi na njega sada jer mu je teško.",
+              correct: false,
+              feedback:
+                "Razgovor je preusmjeren na supruga umejsto na osobu koja proživljava bolest. Na nju je prebačen teret da skrbi da se druga osoba osjeća bolje.",
+            },
+            {
+              text: "Kako se ti nosiš s time što se on boji? Kako se osjećaš zbog toga?",
+              correct: true,
+              feedback:
+                "Fokus je na Vašoj dragoj osobi i njenim emocijama, a ne na suprugu. Ovo je razgovor o njoj.",
+            },
+            {
+              text: "Meni je i teže, ja nemam nikoga. Zamisli kako bi tek meni bilo samoj u tome.",
+              correct: false,
+              feedback:
+                "Razgovor je preusmjeren u hipotetsku situaciju i posve isključio osjećaje Vama drage osobe. Ovakav odgovor može učiniti da se osoba osjeća nevažnom i nepodržanom.",
+            },
+          ],
+        },
+        {
+          text: "Sutra idem na prvi razgovor s onkologom i jako se bojim.",
+          answers: [
+            {
+              text: "Zovi me čim izađeš, želim znati sve detalje!",
+              correct: false,
+              feedback:
+                "Iako pokazuje interes za bolest i liječenje, ovakav odgovor stavlja velik pritisak na osobu da odmah dijeli informacije koje možda i nije spremna dijeliti kao i da se osjeća dužnom umirivati sugovornika.",
+            },
+            {
+              text: "Bit ću s tobom u mislima. Ako budeš kasnije htjela razgovarati, javi mi se. Ako ne budeš, sačekat ću da budeš spremna.",
+              correct: true,
+              feedback:
+                "Fokus je na Vašoj dragoj osobi i njenim emocijama, i potrebama, daje joj prostor da sama odluči kada, što i koliko želi dijeliti.",
+            },
+            {
+              text: "Svakako obiđi i alternativne stručnjake, možda će oni dati bolje savjete.",
+              correct: false,
+              feedback:
+                "Standardni oblici liječenja dobro su ispitani i dokazano učinkoviti u velikom udjelu slučajeva. Ovakav odgovor može osobu osjetljivog emocionalnog stanja navesti na nepovjerenje.",
+            },
+          ],
+        },
+      ];
+
+      /*function shuffle(array) {
+           return array.sort(() => Math.random() - 0.5);
+         }*/
+
+      function loadQuestion() {
+        const q = questions[currentQuestion];
+
+        document.getElementById("speechText").innerText = q.text;
+
+        const opcijeDiv = document.getElementById("opcije");
+        opcijeDiv.innerHTML = "";
+
+        q.answers.forEach((a) => {
+          const b = document.createElement("button");
+          b.innerText = a.text;
+          b.onclick = () => selectAnswer(a);
+          opcijeDiv.appendChild(b);
+        });
+
+        document.querySelector(".speech-box").style.display = "block";
+        document.getElementById("opcije").style.display = "flex";
+      }
+
+      function selectAnswer(answer) {
+        document.querySelector(".speech-box").style.display = "none";
+        document.getElementById("opcije").style.display = "none";
+
+        const fb = document.getElementById("feedbackBox");
+
+        fb.classList.remove("hidden", "good", "bad");
+
+        document.getElementById("feedbackText").innerHTML =
+          `<strong>Ana:</strong> ${questions[currentQuestion].text}<br><br>
+      <strong>Vaš odgovor:</strong> ${answer.text}<br><br>
+      ${answer.feedback}`;
+
+        if (answer.correct) {
+          score++; // povećava se rezultat
+          activateNarcis(); // da bi se upalio narcis
+          fb.classList.add("good");
+        } else {
+          fb.classList.add("bad");
+        }
+      }
+
+      function nextQuestion() {
+        currentQuestion++;
+
+        document.getElementById("feedbackBox").classList.add("hidden");
+
+        if (currentQuestion < questions.length) {
+          loadQuestion();
+        } else {
+          showResult();
+        }
+      }
+
+      /*rad s narcisima kao brojačem točnih odgovora*/
+
+      function initNarcisi() {
+        const n = document.getElementById("narcisi");
+        n.innerHTML = "";
+
+        for (let i = 0; i < 7; i++) {
+          const d = document.createElement("div");
+          d.classList.add("narcis");
+          n.appendChild(d);
+        }
+      }
+
+      function activateNarcis() {
+        const all = document.querySelectorAll(".narcis");
+        if (score - 1 < all.length && score > 0) {
+          all[score - 1].classList.add("active");
+        }
+      }
+
+      function getRewardText(score) {
+        const rewards = [
+          `<div class="quote">
+      <span class="quote-text">“Budi promjena koju želiš vidjeti u svijetu.”</span>
+      <span class="quote-author">— Mahatma Gandhi</span>
+    </div>
+    <p>
+      Svaki početak je težak, ali otvaranjem ovoga vodiča krenuli ste pravim putem.
+      Razumijevanje dolazi korak po korak — i to je put koji vrijedi.
+      Iz objašnjenja odgovora možete bolje razumjeti što Vama dragoj osobi treba u ovoj situaciji.
+    </p>`,
+
+          `<div class="quote">
+      <span class="quote-text">“I najduže putovanje započinje prvim korakom.”</span>
+      <span class="quote-author">— Lao Tzu</span>
+    </div>
+    <p>
+      Uzmite trenutak za sebe — da biste mogli biti podrška drugome.
+
+      Naučite 4-4-6 disanje: udahnite na 4 sekunde, zadržite dah na 4 sekunde, izdahnite u trajanju od 6 sekundi. Ovo će Vam pomoći da se smirite i budete prisutni u razgovoru.
+    </p>`,
+          `<div class="quote">
+      <span class="quote-text">“Ljudi će zaboraviti što ste rekli, ali neće zaboraviti kako su se osjećali.”</span>
+      <span class="quote-author">— Maya Angelou</span>
+    </div>
+    <p>
+      Pokušavate razumjeti — i to čini veliku razliku.
+      Slušajte s namjerom da razumijete, a ne da odgovorite. To pokazuje da Vam je stalo i da ste tu. 
+    </p>`,
+          `<div class="quote">
+      <span class="quote-text">“Riječi, djela i težnje neka vam budu takvi da ih se nikada ne zastitidite.”</span>
+      <span class="quote-author">— Jetsun Milarepa</span>
+    </div>
+    <p>
+Podijelite nježne riječi — ponekad one znače više od rješenja. 
+Darujemo Vam i pjesmu: 
+
+Naucila si zivit, tico lijepa
+od svakoga ne primit ruku pomirenja
+i pocinjes razumit' prvi puta
+da jedno smo na vani a drugo smo iznutra
+
+Hodaj, nebo strpljive voli
+hodaj, mozda se ipak sve u dobro pretvori
+
+Jer tko ce to izvagat svaki puta
+koje rici vratit', a koje ces progucat
+
+I straj te izgovorit nakon svega
+da godinama zivis s nekim
+koga ne znas
+
+Zasto nosis oblak iza lipog lica
+viruj, bit ce sve u redu, i za svako slovo
+ti ne trazi krivca u sebi il' u meni
+u svemu jer slomit' ce nas to.
+
+(Gibonni)
+
+    </p>`,
+          `<div class="quote">
+      <span class="quote-text">“Samo kada su naše srce i ruka otvoreni mi možemo primiti najviši dar.”</span>
+      <span class="quote-author">— Piya Tan</span>
+    </div>
+    <p>
+      U redu je ponekad odmaknuti se i napuniti energiju.
+      Pronađite svoj mir u dobroj knjizi, dugoj šetnji prirodom, vremenu provedenom s drugim dragim ljudima, čineći ono što ste voljeli prije i volite i dalje. 
+      Vaša voljena osoba i dalje zna da ste uz nju, smijete biti tu i za sebe.
+
+      Pokušajte s knjigom Elizabeth Gilbert: Jedi, moli, voli! 
+
+    </p>`,
+          `<div class="quote">
+      <span class="quote-text">“Ne tražite sreću u promjenjivom svijetu. Umjesto toga, usavršite svoju ljubav.”</span>
+      <span class="quote-author">— Budha</span>
+    </div>
+    <p>
+      Male zajedničke navike mogu donijeti puno mira. 
+      Uz dobro druženje, odlično odgovara šalica čaja. 
+      Iskušajte zajedno različite oblike i varijacije u kojima je dostupan zeleni čaj, a ovako ga možete pripremiti:
+
+      U šalicu ulijte vodu na temperaturi 80-85 °C. Da ne biste stalno morali koristiti termometar, dovoljno je da vodu koja je počela kuhati ostavite u šalici oko dvije minute da se ohladi. Sada dodajte čajni vrećicu i pustite da se namoči 3 minute.
+
+      Za iskusnije u pripremanju čaja, preporuka je ova:
+Za pripremu japanskih zelenih čajeva (sencha, bancha, shincha, hojicha...) 
+nemojte koristiti vodu topliju od 80 Celzijevih stupnjeva. 
+Kada govorimo o kineskim zelenim čajevima (longjing, biluochun...) 
+možete koristiti vodu par stupnjeva više temperature. 
+Za malo delikatnije čajeve nemojte prelaziti temperaturu od 60 Celzijevih stupnjeva. 
+Namakanje čaja ovisi o vlastitim preferencijama i vrsti čaja, 
+ali ako koristimo logiku, blaže i osjetljivije čajeve jednostavno namačite kraće. 
+Otprilike oko minutu za japanske čajeve te dvije do tri minute za kineske čajeve.
+    </p>`,
+          `<div class="quote">
+      <span class="quote-text">“Rijeka se prepoznaje plivanjem,
+a čovjek razgovorom.”</span>
+      <span class="quote-author">— korejska narodna izreka</span>
+    </div>
+    <p>
+      Briga za druge počinje brigom za sebe.
+      Iskušajte umirujuću kupku uz glazbu. 
+      Za dodatni mir preporučujemo album Ella & Louis — glazbu koja podsjeća koliko nježnost i blizina znače.
+    </p>`,
+          `<div class="quote">
+      <span class="quote-text">“Rana je mjesto gdje svjetlost ulazi u tebe”</span>
+      <span class="quote-author">— Rumi</span>
+    </div>
+    <p>
+     Čestitamo, zaslužili ste se počastiti zdravom slasticom!
+
+     Za pripremu trebate:
+     180 g pirovog brašna
+70 g oraha
+180 g smeđeg šećera
+220 g ribane mrkve
+1 žličica praška za pecivo
+170 g maslaca
+2 jaja
+1 žlica vanilije
+1 žlica ruma
+100 g čokolade
+
+Pomiješajte otopljeni maslac i šećer, pa dodajte jaja, vaniliju i rum.
+Potom umiješajte sitno ribanu mrkvu i sjedinite.
+U dobivenu smjesu dodajte brašno, prašak za pecivo i 50 g mljevenih oraha.
+Na kraju lagano umiješajte 60 g grubo nasjeckane čokolade.
+Smjesu prebacite u kalup za kruh pa po vrhu posipajte ostatak nasjeckane čokolade i grubo nasjeckanih oraha.
+Pecite na 180°C 45-50 minuta.
+Pustite da se ohladi prije rezanja.
+    </p>`,
+        ];
+
+        return rewards[score];
+      }
+
+      function showResult() {
+        // skrivanje ostalih okvira u prikazu rezultata igre/škole te likova:
+        document.getElementById("anaCharacter").style.display = "none";
+        document.getElementById("partnerCharacter").style.display = "none";
+        document.querySelector(".speech-box").style.display = "none";
+        document.getElementById("opcije").style.display = "none";
+        document.getElementById("feedbackBox").classList.add("hidden");
+
+        const resultScreen = document.getElementById("resultScreen");
+        const resultText = document.getElementById("resultText");
+        const btn = document.getElementById("resultBtn");
+
+        // tekst rezultata
+        resultText.innerHTML = `
+  <h2>Stigli ste do kraja</h2>
+  <p>Osvojili ste ${score} od ${questions.length}</p>
+  ${getRewardText(score)}
+`;
+
+        resultScreen.classList.add("active");
+
+        btn.onclick = () => {
+          resultScreen.classList.remove("active");
+          resetGame();
+          showOnly("startScreen");
+        };
+      }
+
+      /* resetiranje igre i povratak u startni položaj*/
+
+      function resetGame() {
+        currentQuestion = 0;
+        score = 0;
+
+        document.getElementById("anaCharacter").style.display = "block";
+        document.getElementById("partnerCharacter").style.display = "block";
+
+        document.getElementById("opcije").innerHTML = "";
+        document.getElementById("feedbackBox").classList.add("hidden");
+
+        const speechBox = document.querySelector(".speech-box");
+        speechBox.classList.remove("question");
+        speechBox.style.display = "block";
+
+        const btn = document.getElementById("speechBtn");
+        btn.innerText = "Započnite";
+        btn.onclick = startGame;
+        btn.style.display = "inline-block";
+
+        document.getElementById("speechText").innerText =
+          "Nalazite se u situaciji gdje Vam bliska osoba želi priopćiti ozbiljnu vijest. Kroz ovaj vodič birat ćete odgovore i učiti kako pružiti podršku.";
+
+        initNarcisi();
+
+        document.querySelector(".kviz-screen").style.display = "none";
+        document.querySelector(".character-screen").style.display = "flex";
+      }
+
+      function resetIntro() {
+        document.getElementById("speechBtn").style.display = "inline-block";
+      }
+    </script>
+  </body>
+</html>
