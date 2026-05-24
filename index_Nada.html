@@ -67,13 +67,20 @@
       }
 
       .characters img {
-        width: 120px;
-        margin: 10px;
+        width: 150px;
+        height: 150px;
+
+        object-position: center;
+        object-fit: cover;
+        padding: 0;
+        overflow: hidden;
+        margin: 3px;
         cursor: pointer;
         transition: 0.25s ease;
         border-radius: 16px;
         box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
         border: 3px solid transparent;
+        background: linear-gradient(135deg, #30716f, #bcdcdc);
       }
 
       .characters img:hover {
@@ -130,25 +137,25 @@
 
       .character {
         position: absolute;
-        height: 70vh;
+        height: 85vh;
         width: auto;
       }
 
       .ana {
-        left: 20%;
-        bottom: -1vh;
+        left: 15%;
+        bottom: -7vh;
       }
 
       .partner {
-        right: 20%;
-        bottom: -3vh;
+        right: 15%;
+        bottom: -7vh;
       }
 
       /* tekstualni okviri */
 
       .speech-box {
         position: absolute;
-        top: 8%;
+        top: 6%;
         left: 50%;
         transform: translateX(-50%);
         width: 60%;
@@ -173,7 +180,7 @@
       }
 
       .speech-box.question {
-        top: 20%;
+        top: 15%;
         left: 10%;
         transform: none;
         width: 35%;
@@ -214,7 +221,7 @@
       /* FEEDBACK */
       .feedback {
         position: absolute;
-        bottom: 25%;
+        bottom: 20%;
         left: 50%;
         transform: translateX(-50%);
         width: 60%;
