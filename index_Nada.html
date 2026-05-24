@@ -716,9 +716,9 @@
         },
       ];
 
-      /*function shuffle(array) {
-           return array.sort(() => Math.random() - 0.5);
-         }*/
+      function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+      }
 
       function loadQuestion() {
         const q = questions[currentQuestion];
@@ -728,7 +728,7 @@
         const opcijeDiv = document.getElementById("opcije");
         opcijeDiv.innerHTML = "";
 
-        q.answers.forEach((a) => {
+        shuffle(q.answers).forEach((a) => {
           const b = document.createElement("button");
           b.innerText = a.text;
           b.onclick = () => selectAnswer(a);
